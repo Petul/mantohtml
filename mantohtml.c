@@ -63,6 +63,7 @@ typedef enum man_heading_e		// Man page heading levels
 typedef struct man_state_s		// Current man page state
 {
   bool		wrote_header;		// Did we write the HTML header?
+  bool          skip_header;            // Should we skip the HTML header?
   char		basepath[1024];		// Source base path
   const char	*in_block;		// Current block element?
   bool		in_link;		// Are we in a link?
@@ -196,6 +197,12 @@ main(int  argc,				// I - Number of command-line args
       }
 
       state.title = argv[i];
+    }
+    else if (!strcmp(argv[i], "--skip-header"))
+    {
+      // --skip-header
+      // i ++;
+      state.skip_header = true;
     }
     else if (!strcmp(argv[i], "--version"))
     {
@@ -855,7 +862,7 @@ html_font(man_state_t *state,		// I - Current man state
 static void
 html_footer(man_state_t *state)		// I - Current man state
 {
-  if (state->wrote_header)
+  if (state->wrote_header && !state->skip_header)
   {
     puts("  </body>");
     puts("</html>");
@@ -877,6 +884,10 @@ html_header(man_state_t *state,		// I - Current man state
     return;
 
   state->wrote_header = true;
+
+  // state->wrote_header needs to be true for program to finish cleanly
+  if (state->skip_header)
+    return;
 
   puts("<!DOCTYPE html>");
   puts("<html>");
@@ -1853,6 +1864,7 @@ usage(const char *opt)			// I - Unknown option
   puts("   --help                   Show help");
   puts("   --subject 'SUBJECT'      Set subject metadata");
   puts("   --title 'TITLE'          Set output title");
+  puts("   --skip-header            Skip writing the <html> and <body> tags");
   puts("   --version                Show version");
 
   return (1);
