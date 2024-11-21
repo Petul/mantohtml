@@ -64,6 +64,7 @@ typedef struct man_state_s		// Current man page state
 {
   bool		wrote_header;		// Did we write the HTML header?
   bool          skip_header;            // Should we skip the HTML header?
+  bool          use_stdin;              // Should we read from stdin instead of the file
   char		basepath[1024];		// Source base path
   const char	*in_block;		// Current block element?
   bool		in_link;		// Are we in a link?
@@ -201,8 +202,12 @@ main(int  argc,				// I - Number of command-line args
     else if (!strcmp(argv[i], "--skip-header"))
     {
       // --skip-header
-      // i ++;
       state.skip_header = true;
+    }
+    else if (!strcmp(argv[i], "--stdin"))
+    {
+      // --stdin
+      state.use_stdin = true;
     }
     else if (!strcmp(argv[i], "--version"))
     {
@@ -223,8 +228,14 @@ main(int  argc,				// I - Number of command-line args
     else
     {
       // Convert the named file...
-      convert_man(&state, argv[i]);
+      if (!state.use_stdin)
+        convert_man(&state, argv[i]);
     }
+  }
+  
+  if (state.use_stdin)
+  {
+    convert_man(&state, "infile");
   }
 
   // Finish up...
@@ -260,10 +271,21 @@ convert_man(man_state_t *state,		// I - Current man state
   const char	*break_text = "";	// Text to break after next line
 
 
-  if ((fp = fopen(filename, "r")) == NULL)
+  if (state->use_stdin)
   {
-    perror(filename);
-    return;
+    if ((fp = fdopen(STDIN_FILENO, "r")) == NULL)
+    {
+      perror(NULL);
+      return;
+    }
+  }
+  else
+  {
+    if ((fp = fopen(filename, "r")) == NULL)
+    {
+      perror(filename);
+      return;
+    }
   }
 
   if (strchr(filename, '/'))
