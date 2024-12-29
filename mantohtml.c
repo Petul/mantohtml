@@ -1482,8 +1482,10 @@ man_puts(man_state_t *state,		// I - Current man state
       {
         if (*s != '\\' && *s != '\"' && *s != '\'' && *s != '-' && *s != 'e' && *s != ' ')
         {
+          // Completely ignore unrecognized escapes. Keeps output cleaner.
           fprintf(stderr, "mantohtml: Unrecognized escape '\\%c' ignored.\n", *s);
-          putchar('\\');
+          start = ++s;
+          continue;
         }
 
         if (*s == 'e')
